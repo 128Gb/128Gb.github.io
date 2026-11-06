@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Информационное табло магазина</title>
+    <style>
+        /* Сброс стандартных стилей и центрирование */
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Контейнер строго под разрешение экрана 576x192 */
+        .screen-container {
+            width: 576px;
+            height: 192px;
+            background-color: #000000;
+            position: relative;
+            box-sizing: border-box;
+            padding: 15px 24px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        /* Левая секция: Время, Дата и Статус */
+        .left-panel {
+            width: 50%;
+            height: 100%; /* Занимает всю высоту контейнера */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center; /* Идеальное выравнивание всех элементов по центру */
+            padding-top: 0; 
+            margin-top: -3px; 
+            position: relative; /* Для фиксации статуса внизу этого блока */
+        }
+
+        .time-display {
+            font-size: 52px; 
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 1px;
+            text-shadow: 0 0 9px rgba(255, 255, 255, 0.1);
+        }
+
+        .date-display {
+            font-size: 19px; 
+            font-weight: 700; 
+            color: #ffffff;   
+            margin-top: 5px;
+            text-transform: capitalize;
+            text-align: center;
+            white-space: nowrap; 
+            text-shadow: 0 0 9px rgba(255, 255, 255, 0.1); 
+        }
+
+        /* Нижняя панель со статусом (теперь внутри левого блока) */
+        .bottom-panel {
+            position: absolute;
+            bottom: 2px; /* Прижимаем к низу левой панели */
+            width: 100%; /* Ширина 100% от левого блока */
+            display: flex;
+            justify-content: center;
+        }
+
+        .status-badge {
+            font-size: 30px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            text-align: center;
+        }
+
+        /* Неоновое свечение: Открыто (Зеленое) */
+        .status-badge.open {
+            color: #ffffff; 
+            text-shadow: 
+                0 0 2px #ffffff,
+                0 0 7px #30d158,
+                0 0 15px #30d158,
+                0 0 25px #30d158;
+        }
+
+        /* Неоновое свечение: Закрыто (Красное) */
+        .status-badge.closed {
+            color: #ffffff; 
+            text-shadow: 
+                0 0 2px #ffffff,
+                0 0 7px #ff453a,
+                0 0 15px #ff453a,
+                0 0 25px #ff453a;
+        }
+
+        /* Правая секция: Полный увеличенный график работы */
+        .right-panel {
+            width: 44%;
+            background: #0a0a0a;
+            border: 1px solid #1c1c1e;
+            border-radius: 8px;
+            padding: 8px 14px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            height: 100%;
+        }
+
+        .schedule-title {
+            font-size: 17px; 
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 2px; 
+            border-bottom: 1px solid #2c2c2e;
+            padding-bottom: 5px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .schedule-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 2px; 
+        }
+
+        .day-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px; 
+            font-weight: 700; 
+            color: #ffffff; 
+            transition: all 0.3s ease;
+        }
+
+        /* Подсветка текущего дня недели */
+        .day-row.current-day {
+            color: #30d158;
+            font-weight: 800; 
+            transform: scale(1.02);
+        }
+
+        .day-row.sunday {
+            color: #ff453a;
+        }
+        
+        .day-row.sunday.current-day {
+            color: #30d158;
+        }
+
+        .day-hours {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="screen-container">
+        <div class="left-panel">
+            <div class="time-display" id="clock">00:00:00</div>
+            <div class="date-display" id="date">Загрузка...</div>
+            
+            <div class="bottom-panel">
+                <div class="status-badge" id="status">Проверка статуса...</div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="schedule-title">График работы</div>
+            <div class="schedule-rows">
+                <div class="day-row" id="day-1">
+                    <span class="day-name">Понедельник</span>
+                    <span class="day-hours">09:00 – 18:00</span>
+                </div>
+                <div class="day-row" id="day-2">
+                    <span class="day-name">Вторник</span>
+                    <span class="day-hours">09:00 – 18:00</span>
+                </div>
+                <div class="day-row" id="day-3">
+                    <span class="day-name">Среда</span>
+                    <span class="day-hours">09:00 – 18:00</span>
+                </div>
+                <div class="day-row" id="day-4">
+                    <span class="day-name">Четверг</span>
+                    <span class="day-hours">09:00 – 18:00</span>
+                </div>
+                <div class="day-row" id="day-5">
+                    <span class="day-name">Пятница</span>
+                    <span class="day-hours">09:00 – 18:00</span>
+                </div>
+                <div class="day-row" id="day-6">
+                    <span class="day-name">Суббота</span>
+                    <span class="day-hours">09:00 – 18:00</span>
+                </div>
+                <div class="day-row sunday" id="day-0">
+                    <span class="day-name">Воскресенье</span>
+                    <span class="day-hours">09:00 – 15:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDisplay() {
+            const now = new Date();
+
+            // 1. Обновление электронных часов (ЧЧ:ММ:СС)
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+
+            // 2. Обновление календаря (День недели, Число Месяц)
+            const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+            let dateString = now.toLocaleDateString('ru-RU', dateOptions);
+            // Делаем первую букву заглавной
+            dateString = dateString.charAt(0).toUpperCase() + dateString.slice(1);
+            document.getElementById('date').textContent = dateString;
+
+            // 3. Подсветка текущего дня недели в графике
+            const currentDay = now.getDay(); // 0 - Воскресенье, 1 - Понедельник ... 6 - Суббота
+            for (let i = 0; i <= 6; i++) {
+                const row = document.getElementById(`day-${i}`);
+                if (row) {
+                    if (i === currentDay) {
+                        row.classList.add('current-day');
+                    } else {
+                        row.classList.remove('current-day');
+                    }
+                }
+            }
+
+            // 4. Логика проверки рабочего времени магазина
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            const timeInMinutes = currentHour * 60 + currentMinute;
+
+            let isOpen = false;
+            const openTime = 9 * 60; // 09:00 в минутах
+            let closeTime = 18 * 60; // 18:00 в минутах (Пн-Сб)
+
+            if (currentDay === 0) {
+                closeTime = 15 * 60; // 15:00 в минутах (Вс)
+            }
+
+            // Проверяем, попадает ли текущее время в рабочий интервал
+            if (timeInMinutes >= openTime && timeInMinutes < closeTime) {
+                isOpen = true;
+            }
+
+            // 5. Обновление статусной строки внизу
+            const statusElement = document.getElementById('status');
+            if (isOpen) {
+                statusElement.textContent = 'Мы открыты!';
+                statusElement.className = 'status-badge open';
+            } else {
+                statusElement.className = 'status-badge closed';
+                // Если ещё утро текущего дня до открытия
+                if (timeInMinutes < openTime) {
+                    statusElement.textContent = 'Откроемся сегодня в 9.00';
+                } else {
+                    statusElement.textContent = 'Откроемся завтра в 9.00';
+                }
+            }
+        }
+
+        // Запуск функции сразу и установка посекундного обновления
+        updateDisplay();
+        setInterval(updateDisplay, 1000);
+    </script>
+</body>
+</html>
